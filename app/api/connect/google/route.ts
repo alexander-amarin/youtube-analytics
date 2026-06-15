@@ -2,12 +2,12 @@ import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
 export async function GET() {
+  const appUrl = process.env.AUTH_URL ?? "http://localhost:3000"
+
   const session = await auth()
 
   if (!session?.user?.id) {
-    return NextResponse.redirect(
-      new URL("/", process.env.AUTH_URL ?? "http://localhost:3000")
-    )
+    return NextResponse.redirect(new URL("/", appUrl))
   }
 
   const clientId = process.env.AUTH_GOOGLE_ID
@@ -18,7 +18,7 @@ export async function GET() {
   const oauthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth")
   oauthUrl.search = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: "http://localhost:3000/api/connect/google/callback",
+    redirect_uri: `${appUrl}/api/connect/google/callback`,
     response_type: "code",
     scope: [
       "openid",

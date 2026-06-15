@@ -2,11 +2,10 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 
-const REDIRECT_URI = "http://localhost:3000/api/connect/google/callback"
+const appUrl = process.env.AUTH_URL ?? "http://localhost:3000"
+const REDIRECT_URI = `${appUrl}/api/connect/google/callback`
 
 export async function GET(request: NextRequest) {
-  const appUrl = process.env.AUTH_URL ?? "http://localhost:3000"
-
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.redirect(new URL("/", appUrl))
