@@ -1,0 +1,65 @@
+// Prisma schema
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  channels Channel[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  access_token      String? @db.Text
+  refresh_token     String? @db.Text
+  expires_at        Int?
+  scope             String? @db.Text
+  token_type        String? @db.Text
+  id_token          String? @db.Text
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channels Channel[]
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Channel {
+  id               String   @id @default(cuid())
+  userId           String
+  accountId        String
+  youtubeChannelId String
+  title            String
+  thumbnailUrl     String?
+  subscriberCount  BigInt?
+  viewCount        BigInt?
+  videoCount       Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, youtubeChannelId])
+  @@index([userId])
+  @@index([accountId])
+}

@@ -2,8 +2,6 @@ import { Eye, Users, Video } from "lucide-react"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getChannelAnalytics } from "@/services/youtube/analytics"
-import { getMyVideos } from "@/services/youtube/videos"
-import { getRecentComments } from "@/services/youtube/comments"
 import {
   Card,
   CardContent,
@@ -13,12 +11,10 @@ import {
 } from "@/components/ui/card"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart"
-import { VideosTable } from "@/components/dashboard/videos-table"
-import { RecentComments } from "@/components/dashboard/recent-comments"
 import { GoogleSigninButton } from "@/components/auth/google-signin-button"
 import { ChannelSelector } from "@/components/channels/channel-selector"
 
-export default async function Home({
+export default async function AnalyticsPage({
   searchParams,
 }: {
   searchParams: Promise<{ channel?: string }>
@@ -32,8 +28,7 @@ export default async function Home({
           <CardHeader>
             <CardTitle>Connect your YouTube account</CardTitle>
             <CardDescription>
-              Sign in with Google to view channel analytics, video performance,
-              and recent comments.
+              Sign in to view detailed channel analytics.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -70,14 +65,10 @@ export default async function Home({
   const channel =
     channels.find((c) => c.id === channelParam) ?? channels[0]
 
-  // Independent of each other; run concurrently.
-  const [analytics, videos] = await Promise.all([
-    getChannelAnalytics(channel.accountId, channel.youtubeChannelId),
-    getMyVideos(channel.accountId),
-  ])
-
-  // Comments depend on the newest video; pass its id to skip refetching videos.
-  const comments = await getRecentComments(channel.accountId, videos[0]?.id)
+  const analytics = await getChannelAnalytics(
+    channel.accountId,
+    channel.youtubeChannelId
+  )
 
   // The chart expects { day, views }; the analytics service returns
   // { date, views }. Map the date into the chart's `day` axis key.
@@ -90,15 +81,15 @@ export default async function Home({
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
           <p className="text-sm text-muted-foreground">
-            Performance summary for the selected channel.
+            Detailed channel performance insights
           </p>
         </div>
         <ChannelSelector
           channels={channels.map((c) => ({ id: c.id, title: c.title }))}
           activeChannelId={channel.id}
-          basePath="/"
+          basePath="/analytics"
         />
       </div>
 
@@ -120,14 +111,7 @@ export default async function Home({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <AnalyticsChart data={chartData} />
-        </div>
-        <RecentComments comments={comments} />
-      </div>
-
-      <VideosTable videos={videos} />
+      <AnalyticsChart data={chartData} />
     </div>
   )
 }
